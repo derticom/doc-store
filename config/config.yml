@@ -1,0 +1,8 @@
+log_level: "debug"
+admin_token: ""
+storage_path: ""
+postgres_url: ""
+redis_url: ""
+http_server:
+  address: "0.0.0.0:8085"
+  timeout: 5s
