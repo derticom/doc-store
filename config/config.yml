@@ -1,8 +1,15 @@
 log_level: "debug"
-admin_token: ""
-storage_path: ""
-postgres_url: ""
-redis_url: ""
+admin_token: "token"
+postgres_url:  "postgres://docstore:docstore@localhost:5432/docstore?sslmode=disable"
+redis_url: "redis://@localhost:6379"
+
+minio_server:
+  address: "localhost:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  bucket: "docstore"
+  use_ssl: false
+
 http_server:
-  address: "0.0.0.0:8085"
+  address: "localhost:8085"
   timeout: 5s

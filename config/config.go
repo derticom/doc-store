@@ -11,10 +11,18 @@ import (
 type Config struct {
 	LogLevel    string     `yaml:"log_level"`
 	AdminToken  string     `yaml:"admin_token"`
-	StoragePath string     `yaml:"storage_path"`
 	PostgresURL string     `yaml:"postgres_url"`
 	RedisURL    string     `yaml:"redis_url"`
+	Minio       MinIO      `yaml:"minio_server"`
 	Server      HTTPServer `yaml:"http_server"`
+}
+
+type MinIO struct {
+	Address   string `yaml:"address"`
+	AccessKey string `yaml:"access_key"`
+	SecretKey string `yaml:"secret_key"`
+	Bucket    string `yaml:"bucket"`
+	UseSSL    bool   `yaml:"use_ssl"`
 }
 
 type HTTPServer struct {

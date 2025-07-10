@@ -3,23 +3,21 @@ package main
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/derticom/doc-store/config"
 	"github.com/derticom/doc-store/internal/app"
+	"github.com/derticom/doc-store/logger"
 )
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	cfg := config.NewConfig()
 
-	log, err := setupLogger(cfg)
+	log, err := logger.SetupLogger(cfg.LogLevel)
 	if err != nil {
 		panic(fmt.Sprintf("failed to setup logger: %+v", err))
 	}
@@ -35,32 +33,4 @@ func main() {
 	<-ctx.Done()
 
 	log.Info("shutdown service ...")
-}
-
-func setupLogger(cfg *config.Config) (*slog.Logger, error) {
-	var level slog.Level
-	switch strings.ToLower(cfg.LogLevel) {
-	case "debug":
-		level = slog.LevelDebug
-	case "info":
-		level = slog.LevelInfo
-	case "warn":
-		level = slog.LevelWarn
-	case "error":
-		level = slog.LevelError
-	default:
-		return nil, fmt.Errorf("unknown log level: %s", cfg.LogLevel)
-	}
-
-	logger := slog.New(
-		slog.NewTextHandler(
-			os.Stdout,
-			&slog.HandlerOptions{
-				Level:     level,
-				AddSource: true,
-			},
-		),
-	)
-
-	return logger, nil
 }
