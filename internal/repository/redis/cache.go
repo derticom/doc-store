@@ -3,11 +3,11 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/derticom/doc-store/internal/domain/document"
 
-	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -17,11 +17,13 @@ type Cache struct {
 	client *redis.Client
 }
 
-func New(ctx context.Context, addr string) (*Cache, error) {
+func NewCache(ctx context.Context, addr string, numDB int) (*Cache, error) {
 	opts, err := redis.ParseURL(addr)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to redis.ParseURL")
+		return nil, fmt.Errorf("failed to redis.ParseURL: %w", err)
 	}
+
+	opts.DB = numDB
 
 	client := redis.NewClient(opts)
 
@@ -31,7 +33,7 @@ func New(ctx context.Context, addr string) (*Cache, error) {
 	resp := client.Ping(ctx)
 	err = resp.Err()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to client.Ping")
+		return nil, fmt.Errorf("failed to client.Ping: %w", err)
 	}
 
 	return &Cache{client: client}, nil

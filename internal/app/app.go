@@ -11,19 +11,17 @@ import (
 	"github.com/derticom/doc-store/internal/repository/redis"
 	"github.com/derticom/doc-store/internal/server"
 	"github.com/derticom/doc-store/internal/usecase/document"
+	"github.com/derticom/doc-store/internal/usecase/user"
 )
 
 func Run(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
-	documents, err := postgres.New(ctx, cfg.PostgresURL)
+	pgDB, err := postgres.Connect(ctx, cfg.PostgresURL, "./migrations")
 	if err != nil {
-		return fmt.Errorf("failed to postgres.New: %w", err)
+		return fmt.Errorf("failed to postgres.Connect: %w", err)
 	}
-	defer documents.Close()
 
-	err = documents.Migrate("./migrations")
-	if err != nil {
-		return fmt.Errorf("failed to documents.Migrate: %w", err)
-	}
+	docRepo := postgres.NewDocRepo(pgDB)
+	userRepo := postgres.NewUserRepo(pgDB)
 
 	storage, err := minio.New(
 		cfg.Minio.Address,
@@ -34,18 +32,24 @@ func Run(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
 	)
 	if err != nil {
 		return fmt.Errorf("failed to minio.New: %w", err)
-
 	}
 
-	cache, err := redis.New(ctx, cfg.RedisURL)
+	cache, err := redis.NewCache(ctx, cfg.RedisURL, 0)
 	if err != nil {
-		return fmt.Errorf("failed to redis.New: %w", err)
+		return fmt.Errorf("failed to redis.NewCache: %w", err)
 
 	}
 
-	docUseCase := document.NewDocUseCase(documents, storage, cache)
+	sessions, err := redis.NewSessions(ctx, cfg.RedisURL, 1)
+	if err != nil {
+		return fmt.Errorf("failed to redis.NewSessions: %w", err)
+	}
 
-	srv := server.New(cfg.Server.Address, log, docUseCase)
+	docUseCase := document.NewDocUseCase(docRepo, storage, cache)
+
+	userUseCase := user.NewUserUseCase(userRepo, sessions, cfg.AdminToken)
+
+	srv := server.New(cfg.Server.Address, log, docUseCase, userUseCase)
 
 	err = srv.Run()
 	if err != nil {

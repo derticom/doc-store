@@ -10,48 +10,17 @@ import (
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
-	"github.com/pressly/goose/v3"
 )
 
-type Repo struct {
+type DocRepo struct {
 	db *sql.DB
 }
 
-func New(ctx context.Context, dsn string) (*Repo, error) {
-	db, err := sql.Open("pgx", dsn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sql.Open: %w", err)
-	}
-
-	if err = db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("failed to db.PingContext: %w", err)
-	}
-
-	return &Repo{db: db}, nil
+func NewDocRepo(db *sql.DB) *DocRepo {
+	return &DocRepo{db: db}
 }
 
-func (r *Repo) Close() error {
-	err := r.db.Close()
-	if err != nil {
-		return fmt.Errorf("failed to Close: %w", err)
-	}
-
-	return nil
-}
-
-func (r *Repo) Migrate(migrate string) (err error) {
-	if err := goose.SetDialect("postgres"); err != nil {
-		return fmt.Errorf("failed to goose.SetDialect: %w", err)
-	}
-
-	if err := goose.Up(r.db, migrate); err != nil {
-		return fmt.Errorf("failed to goose.Up: %w", err)
-	}
-
-	return nil
-}
-
-func (r *Repo) List(ctx context.Context, userID string) ([]*document.Document, error) {
+func (r *DocRepo) List(ctx context.Context, userID string) ([]*document.Document, error) {
 	const query = `
 SELECT id, name, mime, file, public, created_at, owner_id
 FROM documents
@@ -77,7 +46,7 @@ ORDER BY created_at DESC
 	return docs, nil
 }
 
-func (r *Repo) GetByID(ctx context.Context, documentID string) (*document.Document, error) {
+func (r *DocRepo) GetByID(ctx context.Context, documentID string) (*document.Document, error) {
 	const query = `
 SELECT id, name, mime, file, public, created_at, owner_id, grant_ids
 FROM documents
