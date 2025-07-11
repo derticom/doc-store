@@ -1,5 +1,5 @@
 log_level: "debug"
-admin_token: "token"
+admin_token: "admin_secret_token"
 postgres_url:  "postgres://docstore:docstore@localhost:5432/docstore?sslmode=disable"
 redis_url: "redis://@localhost:6379"
 
