@@ -1,12 +1,10 @@
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/derticom/doc-store/internal/domain/document"
 	"github.com/derticom/doc-store/internal/middleware"
@@ -29,7 +27,7 @@ func (h *DocumentHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	docs, err := h.uc.List(r.Context(), userID)
 	if err != nil {
-		writeError(w, 500, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -41,18 +39,18 @@ func (h *DocumentHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *DocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, "/api/docs/")
-	login := getLoginFromToken(r)
+	id := chi.URLParam(r, "id")
+	login := r.URL.Query().Get("login")
 
-	doc, data, err := h.uc.Get(context.Background(), id, login)
+	doc, data, err := h.uc.Get(r.Context(), id, login)
 	if err != nil {
-		writeError(w, 403, err)
+		writeError(w, http.StatusForbidden, err)
 		return
 	}
 
 	if doc.File {
 		w.Header().Set("Content-Type", doc.Mime)
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		if r.Method == "GET" {
 			w.Write(data)
 		}
@@ -67,7 +65,7 @@ func (h *DocumentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	// Чтение meta
 	metaPart, _, err := r.FormFile("meta")
 	if err != nil {
-		writeError(w, 400, errors.New("missing meta"))
+		writeError(w, http.StatusBadRequest, errors.New("missing meta"))
 		return
 	}
 	defer metaPart.Close()
@@ -81,14 +79,14 @@ func (h *DocumentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		Grant  []string `json:"grant"`
 	}
 	if err := json.NewDecoder(metaPart).Decode(&meta); err != nil {
-		writeError(w, 400, err)
+		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// Валидация токена через authStore
 	userID, err := h.authStore.GetUserID(r.Context(), meta.Token)
 	if err != nil {
-		writeError(w, 403, errors.New("invalid token"))
+		writeError(w, http.StatusForbidden, errors.New("invalid token"))
 		return
 	}
 
@@ -105,7 +103,7 @@ func (h *DocumentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	if meta.File {
 		filePart, _, err := r.FormFile("file")
 		if err != nil {
-			writeError(w, 400, errors.New("missing file"))
+			writeError(w, http.StatusBadRequest, errors.New("missing file"))
 			return
 		}
 		defer filePart.Close()
@@ -123,11 +121,11 @@ func (h *DocumentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.uc.Upload(r.Context(), doc, file); err != nil {
-		writeError(w, 500, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	writeJSON(w, 200, map[string]any{
+	writeJSON(w, http.StatusOK, map[string]any{
 		"data": map[string]any{
 			"file": doc.Name,
 			"json": doc.JSONData,
@@ -140,8 +138,8 @@ func (h *DocumentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(middleware.UserIDKey).(string)
 
 	if err := h.uc.Delete(r.Context(), id, userID); err != nil {
-		writeError(w, 403, err)
+		writeError(w, http.StatusForbidden, err)
 		return
 	}
-	writeJSON(w, 200, map[string]any{"response": map[string]bool{id: true}})
+	writeJSON(w, http.StatusOK, map[string]any{"response": map[string]bool{id: true}})
 }

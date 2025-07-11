@@ -5,10 +5,6 @@ import (
 	"net/http"
 )
 
-func getLoginFromToken(r *http.Request) string {
-	return r.URL.Query().Get("login") // login из query
-}
-
 func writeError(w http.ResponseWriter, code int, err error) {
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(map[string]interface{}{
