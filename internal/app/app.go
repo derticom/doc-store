@@ -45,11 +45,11 @@ func Run(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
 		return fmt.Errorf("failed to redis.NewSessions: %w", err)
 	}
 
-	docUseCase := document.NewDocUseCase(docRepo, storage, cache)
+	docUseCase := document.NewDocUseCase(docRepo, userRepo, storage, cache)
 
 	userUseCase := user.NewUserUseCase(userRepo, sessions, cfg.AdminToken)
 
-	srv := server.New(cfg.Server.Address, log, docUseCase, userUseCase)
+	srv := server.New(cfg.Server.Address, log, docUseCase, userUseCase, sessions)
 
 	err = srv.Run()
 	if err != nil {

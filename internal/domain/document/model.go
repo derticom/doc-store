@@ -12,4 +12,5 @@ type Document struct {
 	OwnerID   string    `json:"owner_id"`
 	Grant     []string  `json:"grant"`
 	CreatedAt time.Time `json:"created"`
+	JSONData  []byte    `json:"json,omitempty"`
 }

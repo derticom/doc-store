@@ -75,3 +75,19 @@ WHERE id = $1
 
 	return &d, nil
 }
+
+func (r *DocRepo) Create(ctx context.Context, doc *document.Document) error {
+	const query = `
+INSERT INTO documents (id, name, mime, file, public, created_at, owner_id, grant_ids, json_data)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	_, err := r.db.ExecContext(ctx, query,
+		doc.ID, doc.Name, doc.Mime, doc.File, doc.Public,
+		doc.CreatedAt, doc.OwnerID, pq.Array(doc.Grant), doc.JSONData)
+	return err
+}
+
+func (r *DocRepo) Delete(ctx context.Context, id string) error {
+	const query = `DELETE FROM documents WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}

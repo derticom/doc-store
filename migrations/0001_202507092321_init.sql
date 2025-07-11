@@ -15,8 +15,7 @@ CREATE TABLE documents (
     created_at TIMESTAMP DEFAULT now(),
     owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
     grant_ids UUID[] DEFAULT '{}',
-    json_data JSONB,
-    path TEXT NOT NULL
+    json_data JSONB
 );
 
 -- +goose Down
