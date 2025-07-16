@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 
@@ -38,7 +39,7 @@ func New(
 	}
 }
 
-func (s *Server) Run() error {
+func (s *Server) Run(ctx context.Context) error {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -75,6 +76,18 @@ func (s *Server) Run() error {
 		})
 	})
 
+	srv := &http.Server{
+		Addr:    s.addr,
+		Handler: r,
+	}
+
+	go func() {
+		<-ctx.Done()
+		s.log.Info("shutting down server...")
+		_ = srv.Shutdown(context.Background())
+	}()
+
 	s.log.Info("Starting server", "addr", s.addr)
-	return http.ListenAndServe(s.addr, r)
+
+	return srv.ListenAndServe()
 }

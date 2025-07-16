@@ -51,7 +51,7 @@ func Run(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
 
 	srv := server.New(cfg.Server.Address, log, docUseCase, userUseCase, sessions)
 
-	err = srv.Run()
+	err = srv.Run(ctx)
 	if err != nil {
 		return fmt.Errorf("server run failed: %w", err)
 	}
