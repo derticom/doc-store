@@ -1,6 +1,18 @@
-version: "3.9"
-
 services:
+  docstore-app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: docstore-app
+    ports:
+      - "8080:8085"
+    volumes:
+      - ./config:/app/config:ro
+    depends_on:
+      - postgres
+      - redis
+      - minio
+
   postgres:
     image: postgres:latest
     container_name: docstore-postgres

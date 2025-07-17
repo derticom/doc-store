@@ -1,8 +1,8 @@
 package config
 
 import (
+	"flag"
 	"log"
-	"os"
 	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
@@ -31,18 +31,12 @@ type HTTPServer struct {
 }
 
 func NewConfig() *Config {
-	configPath := os.Getenv("CONFIG_PATH")
-	if configPath == "" {
-		log.Fatal("CONFIG_PATH environment variable is not set")
-	}
-
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		log.Fatalf("config file does not exist: %s", configPath)
-	}
+	configPath := flag.String("config", "config.yml", "path to config file")
+	flag.Parse()
 
 	var cfg Config
 
-	err := cleanenv.ReadConfig(configPath, &cfg)
+	err := cleanenv.ReadConfig(*configPath, &cfg)
 	if err != nil {
 		log.Fatalf("error reading config: %s", err)
 	}

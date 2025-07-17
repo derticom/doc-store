@@ -175,62 +175,57 @@
   }
 }
 ```
-
 ---
 
 ## Запуск сервиса
 
-### 1. Создать конфигурационный файл (или использовать демо _config/config.yml_) с параметрами подключения к:
-   - PostgreSQL
-   - Redis
-   - MinIO
-- задать административный токен для регистрации новых пользователей
+### 1. Создание конфигурационного файла
 
---------
+Файл `config/config.yml` уже подготовлен. Пример:
 
-**Пример `config.yaml`:**
 ```yaml
 log_level: "debug"
 admin_token: "admin_secret_token"
-postgres_url:  "postgres://docstore:docstore@localhost:5432/docstore?sslmode=disable"
-redis_url: "redis://@localhost:6379"
+
+postgres_url: "postgres://docstore:docstore@postgres:5432/docstore?sslmode=disable"
+redis_url: "redis://redis:6379"
 
 minio_server:
-  address: "localhost:9000"
+  address: "minio:9000"
   access_key: "minioadmin"
   secret_key: "minioadmin"
   bucket: "docstore"
   use_ssl: false
 
 http_server:
-  address: "localhost:8085"
+  address: "0.0.0.0:8085"
   timeout: 5s
 ```
---------
 
-### 2. Запустить зависимости
+---
 
-В корне проекта:
+### 2. Запуск окружения (приложение + зависимости)
+
 ```bash
-docker-compose up -d
+docker compose up --build
 ```
 
 Это поднимет:
 
-- PostgreSQL (хранилище метаданных и пользователей)
-- Redis (кеш и хранилище сессий авторизации)
-- MinIO (хранилище файлов)
+- `docstore-app` — основной сервис
+- `postgres` — база данных
+- `redis` — кэш и сессии
+- `minio` — хранилище файлов
+- `create-bucket` — инициализация bucket-а в MinIO
 
 ---
 
-### 3. Запустить приложение
+## Доступные сервисы
 
-```bash
-CONFIG_PATH=config/config.yml go run cmd/doc-store/main.go
-```
-
----
-
-
-
+| Сервис       | URL                                 |
+|--------------|--------------------------------------|
+| Приложение   | http://localhost:8080                |
+| MinIO UI     | http://localhost:9001 (admin:admin)  |
+| PostgreSQL   | postgres://docstore:docstore@localhost:5432/docstore |
+| Redis        | redis://localhost:6379               |
 
